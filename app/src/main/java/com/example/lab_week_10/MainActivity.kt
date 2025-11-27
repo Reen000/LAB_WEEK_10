@@ -1,54 +1,78 @@
 package com.example.lab_week_10
 
 import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import android.widget.TextView
 import android.widget.Button
-import viewmodels.TotalViewModel // Assuming TotalViewModel is in the viewmodels package
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.room.Room
+import com.example.lab_week_10.R
+import com.example.lab_week_10.database.Total
+import com.example.lab_week_10.database.TotalDatabase
+import com.example.lab_week_10.viewmodels.TotalViewModel
+
+// You would typically define this in a separate file (TotalViewModel.kt)
+// but it is included here for completeness of the logic.
 
 class MainActivity : AppCompatActivity() {
-    // 1. Initialize TotalViewModel using ViewModelProvider
+    // Pindah deklarasi db dan viewModel ke sini
+    private val db by lazy { prepareDatabase() }
     private val viewModel by lazy {
         ViewModelProvider(this)[TotalViewModel::class.java]
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // You might want to remove the enableEdgeToEdge and ViewCompat code if it's not strictly needed
-        // enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        // ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-        //     val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-        //     v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-        //     insets
-        // }
+        // Inisialisasi nilai dari DB
+        initializeValueFromDatabase()
 
+        // Siapkan ViewModel dan observer
         prepareViewModel()
     }
 
-    // Function to update the TextView
     private fun updateText(total: Int) {
-        // Find TextView and set its text using a string resource
         findViewById<TextView>(R.id.text_total).text =
             getString(R.string.text_total, total)
     }
 
-    // Function to set up LiveData observation and button click listener
-    private fun prepareViewModel(){
-        // 2. Observe the 'total' LiveData from the ViewModel
-        viewModel.total.observe(this) { total ->
-            updateText(total)
+    private fun prepareViewModel() {
+        viewModel.total.observe(this) { totalValue ->
+            updateText(totalValue ?: 0)
         }
 
-        // 3. Set click listener for the increment button
         findViewById<Button>(R.id.button_increment).setOnClickListener {
-            // Call the ViewModel method to update the total
             viewModel.incrementTotal()
         }
+    }
+
+    private fun prepareDatabase(): TotalDatabase {
+        return Room.databaseBuilder(
+            applicationContext,
+            TotalDatabase::class.java, "total-database"
+        ).allowMainThreadQueries().build()
+    }
+
+    private fun initializeValueFromDatabase() {
+        val totalList = db.totalDao().getTotal(ID)
+        if (totalList.isEmpty()) {
+            db.totalDao().insert(Total(id = ID, total = 0))
+        } else {
+            viewModel.setTotal(totalList.first().total)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        val currentTotal = viewModel.total.value ?: 0
+        db.totalDao().update(Total(ID, currentTotal))
+    }
+
+    companion object {
+        const val ID: Long = 1
     }
 }

@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import viewmodels.TotalViewModel
+import com.example.lab_week_10.viewmodels.TotalViewModel
 import androidx.lifecycle.ViewModelProvider
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER

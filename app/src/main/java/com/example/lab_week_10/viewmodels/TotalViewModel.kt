@@ -1,4 +1,4 @@
-package viewmodels
+package com.example.lab_week_10.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.MutableLiveData
@@ -11,4 +11,9 @@ class TotalViewModel: ViewModel() {
     fun incrementTotal() {
         _total.value = (_total.value ?: 0) + 1
     }
+    //Set new total value
+    fun setTotal(newTotal: Int) {
+        _total.postValue(newTotal)
+    }
+
 }
